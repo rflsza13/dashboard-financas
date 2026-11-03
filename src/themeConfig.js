@@ -1,3 +1,5 @@
+import { aplicarCores, lerCores } from "utils/tema";
+
 const themeConfig = {
   primary: "#e3242b",
   accent: "#ff5a4f",
@@ -33,5 +35,8 @@ const themeConfig = {
     focusBoxShadow: "rgba(227, 36, 43, 0.35)",
   },
 };
+
+const coresSalvas = lerCores();
+if (coresSalvas) aplicarCores(themeConfig, coresSalvas);
 
 export default themeConfig;

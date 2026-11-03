@@ -75,14 +75,23 @@ export default {
   info: {
     main: themeConfig.primary,
     focus: themeConfig.accent,
-    charts: {
-      100: "#f0555a",
-      200: "#c4161c",
-      300: "#c4161c",
-      400: "#8f1015",
-      500: "#650b0f",
-      600: "#3d0609",
-    },
+    charts: themeConfig.tonsInfo
+      ? {
+          100: themeConfig.tonsInfo[0],
+          200: themeConfig.tonsInfo[1],
+          300: themeConfig.tonsInfo[2],
+          400: themeConfig.tonsInfo[3],
+          500: themeConfig.tonsInfo[4],
+          600: themeConfig.tonsInfo[5],
+        }
+      : {
+          100: "#f0555a",
+          200: "#c4161c",
+          300: "#c4161c",
+          400: "#8f1015",
+          500: "#650b0f",
+          600: "#3d0609",
+        },
   },
 
   success: {
@@ -187,8 +196,8 @@ export default {
 
     primary: {
       deg: "97.89",
-      main: "#e3242b",
-      state: "#ff6a4d",
+      main: themeConfig.primary,
+      state: themeConfig.personalizado ? themeConfig.accent : "#ff6a4d",
     },
 
     secondary: {
@@ -203,8 +212,8 @@ export default {
     },
 
     info: {
-      main: "#e3242b",
-      state: "#ff6a4d",
+      main: themeConfig.primary,
+      state: themeConfig.personalizado ? themeConfig.accent : "#ff6a4d",
     },
 
     success: {
@@ -247,8 +256,8 @@ export default {
     },
 
     info: {
-      main: "#e3242b",
-      state: "#ff6a4d",
+      main: themeConfig.primary,
+      state: themeConfig.personalizado ? themeConfig.accent : "#ff6a4d",
       border: "#f9b4b4",
     },
 
@@ -297,7 +306,7 @@ export default {
     },
 
     info: {
-      basic: "#e3242b",
+      basic: themeConfig.primary,
       background: "#fc9797",
       text: "#bd0000",
     },

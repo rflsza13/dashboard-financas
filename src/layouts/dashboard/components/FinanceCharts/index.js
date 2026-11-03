@@ -7,7 +7,7 @@ import themeConfig from "themeConfig";
 
 const texto = { colors: themeConfig.fonts.secondary, fontSize: "11px" };
 const COR_INVEST = "#f6ad55";
-const PALETA = ["#e3242b", "#ff6a4d", "#f6ad55", "#01b574", "#8f9bff", "#c084fc", "#38bdf8", "#facc15", "#94a3b8"];
+const PALETA = [themeConfig.primary, themeConfig.accent, "#f6ad55", "#01b574", "#8f9bff", "#c084fc", "#38bdf8", "#facc15", "#94a3b8"];
 
 const base = {
   chart: { toolbar: { show: false }, background: "transparent", fontFamily: "inherit" },

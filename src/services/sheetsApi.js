@@ -1,13 +1,13 @@
 import { v4 as uuidv4 } from "uuid";
 import { mesclarConfig } from "utils/config";
 import { chaveItem } from "utils/finance";
+import { TOKEN_DEV, encerrarSessao, erroDeAcesso, exigeLogin, tokenAtual } from "services/auth";
 
 /**
  * Cliente da API (Google Apps Script). Sem REACT_APP_SCRIPT_URL o app roda em
  * "modo demonstração": dados fictícios guardados só no navegador (localStorage).
  */
 const SCRIPT_URL = process.env.REACT_APP_SCRIPT_URL;
-const TOKEN = process.env.REACT_APP_SCRIPT_TOKEN;
 
 export const isDemo = !SCRIPT_URL;
 
@@ -15,13 +15,24 @@ export const isDemo = !SCRIPT_URL;
 
 async function call(payload) {
   // Sem cabeçalhos customizados: evita preflight CORS no Apps Script.
+  const credencial = exigeLogin ? tokenAtual() : null;
+  if (exigeLogin && !credencial) {
+    encerrarSessao("Sua sessão expirou. Entre novamente.");
+    throw erroDeAcesso("Sua sessão expirou. Entre novamente.");
+  }
   const res = await fetch(SCRIPT_URL, {
     method: "POST",
-    body: JSON.stringify({ ...payload, token: TOKEN }),
+    body: JSON.stringify(credencial ? { ...payload, idToken: credencial } : { ...payload, token: TOKEN_DEV }),
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const data = await res.json();
-  if (!data.ok) throw new Error(data.error || "Erro desconhecido");
+  if (!data.ok) {
+    if (data.code === "AUTH") {
+      encerrarSessao(data.error || "Sua sessão expirou. Entre novamente.");
+      throw erroDeAcesso(data.error || "Acesso negado.");
+    }
+    throw new Error(data.error || "Erro desconhecido");
+  }
   return data;
 }
 
@@ -33,6 +44,7 @@ const conferir = (item) => ({
 });
 
 const remote = {
+  quemSou: () => call({ action: "whoami" }),
   bootstrap: () => call({ action: "bootstrap" }),
   listarAno: (ano) => call({ action: "listarAno", ano }).then((r) => r.itens),
   setCelula: (ano, item, mes, campo, valor) =>
@@ -271,6 +283,7 @@ function acharItem(db, ano, id) {
 }
 
 const demo = {
+  quemSou: async () => ({ ok: true, email: "demo" }),
   bootstrap: async () => {
     const db = lerDemo();
     return {

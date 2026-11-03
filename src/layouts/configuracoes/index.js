@@ -12,7 +12,18 @@ import { FieldLabel } from "layouts/dashboard/components/fields";
 import { useFinance } from "context/finance";
 import { RECURSOS, validarConfig } from "utils/config";
 import themeConfig from "themeConfig";
-import { aplicarTema, temaAtual } from "utils/tema";
+import { useAuth } from "context/auth";
+import {
+  PADRAO_CORES,
+  PRESETS,
+  aplicarTema,
+  derivar,
+  limparCores,
+  lerCores,
+  recarregar,
+  salvarCores,
+  temaAtual,
+} from "utils/tema";
 
 const CORES = [
   { chave: "corReceitas", rotulo: "Receitas" },
@@ -26,7 +37,23 @@ function Configuracoes() {
   const [erros, setErros] = useState({});
   const [salvando, setSalvando] = useState(false);
   const [retorno, setRetorno] = useState(null);
+  const { exigeLogin, usuario, sair } = useAuth();
   const [claro, setClaro] = useState(temaAtual() === "claro");
+  const [cores, setCores] = useState(() => lerCores() || PADRAO_CORES);
+  const [erroCores, setErroCores] = useState("");
+  const previa = derivar(cores);
+  const setCor = (campo) => (valor) => setCores((c) => ({ ...c, [campo]: valor }));
+
+  const aplicarCoresTema = () => {
+    const msg = salvarCores(cores);
+    setErroCores(msg);
+    if (!msg) recarregar.executar();
+  };
+
+  const restaurarCores = () => {
+    limparCores();
+    recarregar.executar();
+  };
 
   const alternarTema = (ligado) => {
     setClaro(ligado);
@@ -181,8 +208,115 @@ function Configuracoes() {
                   </VuiTypography>
                 </VuiBox>
               </VuiBox>
+
+              <VuiTypography variant="button" color="white" fontWeight="bold" sx={{ display: "block", mt: 3, mb: 1 }}>
+                Cores do tema
+              </VuiTypography>
+              <VuiTypography variant="caption" color="text" sx={{ display: "block", mb: 2 }}>
+                Altera cards, fontes, fundo e cor de destaque. Escolha um tema pronto ou ajuste cada cor e clique em
+                “Aplicar tema” (a página recarrega).
+              </VuiTypography>
+              <VuiBox display="flex" flexWrap="wrap" gap="8px" mb={2}>
+                {PRESETS.map((p) => {
+                  const { nome, ...valores } = p;
+                  return (
+                    <VuiButton key={nome} size="small" color="info" variant="outlined" onClick={() => setCores(valores)}>
+                      <span style={{ width: 10, height: 10, borderRadius: "50%", background: p.destaque, marginRight: 6, display: "inline-block" }} />
+                      {nome}
+                    </VuiButton>
+                  );
+                })}
+              </VuiBox>
+              <Grid container spacing={2} sx={{ mb: 1 }}>
+                {[
+                  ["destaque", "Cor de destaque"],
+                  ["fundo", "Fundo da página"],
+                  ["card", "Cor dos cards"],
+                  ["texto", "Texto principal"],
+                  ["textoSec", "Texto secundário"],
+                ].map(([campo, rotulo]) => (
+                  <Grid item xs={6} md={4} key={campo}>
+                    <FieldLabel>{rotulo}</FieldLabel>
+                    <VuiBox display="flex" alignItems="center" gap="8px">
+                      <input
+                        type="color"
+                        aria-label={rotulo}
+                        value={cores[campo]}
+                        onChange={(ev) => setCor(campo)(ev.target.value)}
+                        style={{ width: 40, height: 30, padding: 0, border: `1px solid ${themeConfig.cards.borderColor}`, borderRadius: 8, background: "transparent", cursor: "pointer" }}
+                      />
+                      <VuiTypography variant="caption" color="text">
+                        {cores[campo]}
+                      </VuiTypography>
+                    </VuiBox>
+                  </Grid>
+                ))}
+                <Grid item xs={12} md={8}>
+                  <VuiBox display="flex" justifyContent="space-between">
+                    <FieldLabel>Transparência dos cards</FieldLabel>
+                    <VuiTypography variant="caption" color="text">
+                      {Math.round(cores.opacidade * 100)}% opacos
+                    </VuiTypography>
+                  </VuiBox>
+                  <input
+                    type="range"
+                    min={30}
+                    max={100}
+                    step={1}
+                    aria-label="Transparência dos cards"
+                    value={Math.round(cores.opacidade * 100)}
+                    onChange={(ev) => setCor("opacidade")(Number(ev.target.value) / 100)}
+                    style={{ width: "100%", accentColor: cores.destaque }}
+                  />
+                </Grid>
+              </Grid>
+
+              <VuiBox sx={{ borderRadius: "16px", p: 2, background: previa.gradient, border: `1px solid ${themeConfig.cards.borderColor}` }} aria-label="Prévia do tema">
+                <VuiBox sx={{ borderRadius: "16px", p: 2, background: previa.cardBackground, border: `1px solid ${previa.cardBorder}` }}>
+                  <div style={{ color: previa.fonts.primary, fontWeight: 700, fontSize: 15 }}>Prévia do card</div>
+                  <div style={{ color: previa.fonts.secondary, fontSize: 12, margin: "4px 0 10px" }}>Texto secundário de exemplo</div>
+                  <span style={{ background: previa.primary, color: "#fff", borderRadius: 8, padding: "4px 12px", fontSize: 12 }}>Destaque</span>
+                </VuiBox>
+              </VuiBox>
+              {previa.contraste < 4.5 && (
+                <VuiTypography variant="caption" color="warning" sx={{ display: "block", mt: 1 }}>
+                  Contraste baixo entre o texto principal e os cards ({previa.contraste.toFixed(1)}:1). O texto pode ficar difícil de ler.
+                </VuiTypography>
+              )}
+              {erroCores && (
+                <VuiTypography variant="caption" color="error" sx={{ display: "block", mt: 1 }}>
+                  {erroCores}
+                </VuiTypography>
+              )}
+              <VuiBox display="flex" gap="8px" mt={2}>
+                <VuiButton size="small" color="info" variant="contained" onClick={aplicarCoresTema}>
+                  Aplicar tema
+                </VuiButton>
+                <VuiButton size="small" color="info" variant="outlined" onClick={restaurarCores}>
+                  Restaurar padrão
+                </VuiButton>
+              </VuiBox>
             </Card>
           </Grid>
+
+          {exigeLogin && usuario && (
+            <Grid item xs={12} xl={6}>
+              <Card sx={{ height: "100%" }}>
+                {titulo("Conta", "Acesso protegido por login do Google")}
+                <VuiTypography variant="button" color="white" fontWeight="medium" sx={{ display: "block" }}>
+                  {usuario.nome}
+                </VuiTypography>
+                <VuiTypography variant="caption" color="text" sx={{ display: "block", mb: 2 }}>
+                  {usuario.email}
+                </VuiTypography>
+                <VuiBox>
+                  <VuiButton size="small" color="info" variant="outlined" onClick={sair}>
+                    Sair
+                  </VuiButton>
+                </VuiBox>
+              </Card>
+            </Grid>
+          )}
 
           <Grid item xs={12} xl={6}>
             <Card>

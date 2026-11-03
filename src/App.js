@@ -1,12 +1,9 @@
 import { useState, useEffect } from "react";
 import { Route, Switch, Redirect, useLocation } from "react-router-dom";
-import { ThemeProvider } from "@mui/material/styles";
-import CssBaseline from "@mui/material/CssBaseline";
 import { IoMenu } from "react-icons/io5";
 
 import VuiBox from "components/VuiBox";
 import Sidenav from "examples/Sidenav";
-import theme from "assets/theme";
 import themeConfig from "themeConfig";
 import routes from "routes";
 import { useVisionUIController, setMiniSidenav } from "context";
@@ -59,8 +56,7 @@ export default function App() {
     });
 
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
+    <>
       {layout === "dashboard" && (
         <Sidenav
           color={sidenavColor}
@@ -100,6 +96,6 @@ export default function App() {
         {getRoutes(rotasAtivas)}
         <Redirect from="*" to="/dashboard" />
       </Switch>
-    </ThemeProvider>
+    </>
   );
 }

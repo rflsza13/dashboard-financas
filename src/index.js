@@ -1,21 +1,15 @@
 import React from "react";
-import { createRoot} from "react-dom/client";
+import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
-import App from "App";
-
-// Vision UI Dashboard React Context Provider
+import Root from "Root";
 import { VisionUIControllerProvider } from "context";
-import { FinanceProvider } from "context/finance";
 
-const rootElement = document.getElementById('root');
-const root = createRoot(rootElement);
+const root = createRoot(document.getElementById("root"));
 
-
-root.render(<BrowserRouter>
-  <VisionUIControllerProvider>
-    <FinanceProvider>
-      <App />
-    </FinanceProvider>
-  </VisionUIControllerProvider>
-</BrowserRouter>)
-
+root.render(
+  <BrowserRouter>
+    <VisionUIControllerProvider>
+      <Root />
+    </VisionUIControllerProvider>
+  </BrowserRouter>
+);

@@ -18,22 +18,47 @@ Serve para testar as telas antes de ligar a planilha.
      `Pagos`, `Regras`, `Importados`) e `Ajustes` (tela Configurações): o dashboard cria as que faltarem.
 3. Pode editar direto na planilha ou pelo dashboard; os dois funcionam.
 
-## 3. Script que grava na planilha (Apps Script)
+## 3. Login com Google (Cloud Console)
+O acesso é protegido por login do Google, conferido **no servidor** (Apps Script). Só os e-mails da sua lista entram.
+
+1. Acesse https://console.cloud.google.com e crie um projeto (ou use um existente).
+2. **APIs e serviços → Tela de permissão OAuth**: tipo **Externo**, informe nome do app e seu e-mail.
+   Em "Usuários de teste", adicione os e-mails que vão usar (enquanto o app estiver em "Teste", só eles conseguem entrar).
+3. **APIs e serviços → Credenciais → Criar credenciais → ID do cliente OAuth → Aplicativo da Web**.
+   Em **Origens JavaScript autorizadas** adicione, sem barra no final:
+   - `http://localhost:3000` (para testar na sua máquina)
+   - `https://SEU-APP.vercel.app` (o endereço de produção do Vercel; domínio próprio também, se usar)
+4. Copie o **ID do cliente** (termina em `.apps.googleusercontent.com`).
+
+> Cada endereço do app precisa estar nas origens autorizadas. Os endereços de "preview" do Vercel mudam a cada deploy;
+> use o login só no endereço de produção.
+
+## 4. Script que grava na planilha (Apps Script)
 1. Na planilha: **Extensões → Apps Script**. Apague o conteúdo e cole `apps-script/Code.gs`.
-2. Troque `TROQUE-ESTA-SENHA` no topo por uma senha longa (guarde-a).
+2. No topo do arquivo preencha:
+   - `CLIENT_ID`: o ID do cliente do passo 3;
+   - `EMAILS_PERMITIDOS`: a lista de e-mails Google que podem entrar (ex.: `['voce@gmail.com']`);
+   - `TOKEN`: deixe vazio `''` (só serve para desenvolvimento sem login).
 3. **Implantar → Nova implantação → tipo "App da Web"**:
    - Executar como: **Eu**
-   - Quem tem acesso: **Qualquer pessoa**
-4. Autorize quando o Google pedir e copie a URL que termina em `/exec`.
+   - Quem tem acesso: **Qualquer pessoa** (quem não tiver login válido e e-mail permitido recebe "acesso negado")
+4. Autorize quando o Google pedir (o script precisa consultar o Google para validar o login) e copie a URL `/exec`.
 5. Se alterar o código depois: **Implantar → Gerenciar implantações → editar → nova versão**.
 
-## 4. Ligar o React à planilha
-1. Copie `.env.example` para `.env` e preencha:
-   ```
-   REACT_APP_SCRIPT_URL=<URL /exec>
-   REACT_APP_SCRIPT_TOKEN=<a mesma senha do Code.gs>
-   ```
-2. Reinicie o `npm start`. O aviso de modo demonstração some.
+## 5. Ligar o React (local e Vercel)
+**Local:** copie `.env.example` para `.env` e preencha `REACT_APP_SCRIPT_URL` e `REACT_APP_GOOGLE_CLIENT_ID`.
+Reinicie o `npm start`.
+
+**Vercel:** o arquivo `.env` não vai para o GitHub (está no `.gitignore`), então cadastre as variáveis no painel:
+1. Projeto → **Settings → Environment Variables**.
+2. Crie `REACT_APP_SCRIPT_URL` e `REACT_APP_GOOGLE_CLIENT_ID` (Production e, se quiser, Preview).
+3. Faça **Redeploy**: as variáveis entram no código durante o build, então mudar o valor exige novo deploy.
+
+Sem as variáveis, o app abre em modo demonstração (dados fictícios). Com a URL mas sem o Client ID, a tela de login avisa
+que falta configurar. O `vercel.json` já cuida das rotas (atualizar a página em `/mes`, por exemplo).
+
+Sobre a sessão: o login do Google vale cerca de 1 hora; depois disso o app volta para a tela de login (um clique).
+O botão **Sair** fica em Configurações → Conta.
 
 ## Como o dashboard usa a planilha
 - **Planilha (página):** edita qualquer célula do realizado ou do previsto; cria, renomeia e exclui itens (linhas).
@@ -52,9 +77,12 @@ Serve para testar as telas antes de ligar a planilha.
 - **Importar extrato:** CSV (Data, Descrição, Valor ou Débito/Crédito) ou OFX. Os valores são SOMADOS ao realizado do mês.
   Lançamentos já importados são ignorados nas próximas vezes (aba `Importados`).
 - **Exportar PDF:** botão no Resumo mensal; abre a impressão do navegador, escolha "Salvar como PDF".
-- **Tema claro:** Configurações → Aparência (guarda a escolha só no navegador; é uma inversão aproximada das cores).
+- **Tema claro e cores do tema:** Configurações → Aparência. O tema claro é uma inversão aproximada das cores. Em "Cores do
+  tema" você escolhe um tema pronto ou ajusta destaque, fundo, cards, textos e transparência; "Aplicar tema" recarrega a
+  página. A escolha fica só no navegador.
 
 ## Segurança
-A senha (token) vai embutida no código do React, e a URL do script é aberta a "qualquer pessoa".
-Para uso pessoal, rodando na sua máquina, é suficiente. Não publique o app na internet
-com esse token sem antes colocar uma camada de login ou um backend no meio.
+- A URL do script é pública, mas toda chamada precisa de um login do Google válido **e** de um e-mail da lista
+  `EMAILS_PERMITIDOS`; o servidor confere isso a cada chamada. Não há senha embutida no código do site.
+- Não coloque `REACT_APP_SCRIPT_TOKEN` em produção (ele ficaria legível no código do navegador).
+- O tema de cores e o tema claro ficam guardados só no navegador de quem os escolheu.

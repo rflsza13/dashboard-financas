@@ -11,8 +11,14 @@
  *  - Uma aba "Ajustes" (criada sozinha ao salvar em Configurações): Parâmetro | Valor | O que faz.
  */
 
-// TROQUE por uma senha longa. Use o mesmo valor em REACT_APP_SCRIPT_TOKEN no .env do React.
-const TOKEN = 'TROQUE-ESTA-SENHA';
+// ---- ACESSO ----
+// 1) Client ID do Google (Cloud Console > Credenciais > ID do cliente OAuth, tipo "Aplicativo da Web").
+//    É o mesmo valor de REACT_APP_GOOGLE_CLIENT_ID no front-end.
+const CLIENT_ID = 'TROQUE-PELO-CLIENT-ID.apps.googleusercontent.com';
+// 2) E-mails da conta Google que podem usar o dashboard.
+const EMAILS_PERMITIDOS = ['voce@gmail.com'];
+// 3) Opcional, SÓ para desenvolvimento local sem login (REACT_APP_SCRIPT_TOKEN). Deixe vazio em produção.
+const TOKEN = '';
 
 const ABA_AJUSTES = 'Ajustes';
 const ABA_REC = 'Recorrências';
@@ -38,13 +44,14 @@ function doGet() {
 function doPost(e) {
   try {
     const req = JSON.parse(e.postData.contents);
-    if (TOKEN === 'TROQUE-ESTA-SENHA') throw new Error('Defina o TOKEN no Code.gs antes de usar.');
-    if (req.token !== TOKEN) throw new Error('Não autorizado.');
+    const acesso = autorizar(req);
 
     const lock = LockService.getScriptLock();
     lock.waitLock(20000);
     try {
       switch (req.action) {
+        case 'whoami':
+          return saida({ ok: true, email: acesso.email });
         case 'bootstrap':
           return saida({ ok: true, anos: nomesAnos(), recorrencias: listarRecorrencias(), dados: lerTabelas(), config: lerAjustes() });
         case 'listarAno':
@@ -89,8 +96,53 @@ function doPost(e) {
       lock.releaseLock();
     }
   } catch (err) {
-    return saida({ ok: false, error: String((err && err.message) || err) });
+    return saida({ ok: false, error: String((err && err.message) || err), code: err && err.codigo ? err.codigo : undefined });
   }
+}
+
+/* ---------- acesso (login do Google verificado no servidor) ---------- */
+
+function erroAcesso(mensagem) {
+  const e = new Error(mensagem);
+  e.codigo = 'AUTH';
+  return e;
+}
+
+function hashHex(texto) {
+  return Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, texto)
+    .map(function (b) { return ('0' + (b < 0 ? b + 256 : b).toString(16)).slice(-2); }).join('');
+}
+
+function autorizar(req) {
+  if (req.idToken) return verificarIdToken(String(req.idToken));
+  if (TOKEN && req.token === TOKEN) return { email: '(token de desenvolvimento)' };
+  throw erroAcesso('Faça login para continuar.');
+}
+
+function verificarIdToken(token) {
+  if (CLIENT_ID.indexOf('TROQUE') === 0) throw new Error('Defina o CLIENT_ID no Code.gs antes de usar.');
+  const permitidos = EMAILS_PERMITIDOS.map(function (x) { return String(x).trim().toLowerCase(); })
+    .filter(function (x) { return x && x !== 'voce@gmail.com'; });
+  if (!permitidos.length) throw new Error('Informe os e-mails permitidos em EMAILS_PERMITIDOS no Code.gs.');
+
+  const cache = CacheService.getScriptCache();
+  const chave = 'tk_' + hashHex(token);
+  const guardado = cache.get(chave);
+  if (guardado) return { email: guardado };
+
+  const resp = UrlFetchApp.fetch('https://oauth2.googleapis.com/tokeninfo?id_token=' + encodeURIComponent(token),
+    { muteHttpExceptions: true });
+  if (resp.getResponseCode() !== 200) throw erroAcesso('Sessão inválida ou expirada. Entre novamente.');
+  const d = JSON.parse(resp.getContentText());
+  const agora = Math.floor(Date.now() / 1000);
+  if (d.aud !== CLIENT_ID) throw erroAcesso('Login emitido para outro aplicativo.');
+  if (d.iss !== 'accounts.google.com' && d.iss !== 'https://accounts.google.com') throw erroAcesso('Emissor do login inválido.');
+  if (Number(d.exp) <= agora) throw erroAcesso('Sessão expirada. Entre novamente.');
+  if (String(d.email_verified) !== 'true') throw erroAcesso('O e-mail da conta Google não está verificado.');
+  const email = String(d.email || '').toLowerCase();
+  if (permitidos.indexOf(email) < 0) throw erroAcesso('Este e-mail não tem acesso: ' + email + '.');
+  cache.put(chave, email, Math.max(1, Math.min(300, Number(d.exp) - agora)));
+  return { email: email };
 }
 
 /* ---------- utilidades ---------- */

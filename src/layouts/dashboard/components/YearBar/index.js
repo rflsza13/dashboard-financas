@@ -1,3 +1,4 @@
+import { modoAcesso } from "services/auth";
 import PropTypes from "prop-types";
 
 import { IoAdd, IoRefresh } from "react-icons/io5";
@@ -33,7 +34,20 @@ function YearBar({ titulo, children }) {
         >
           <VuiTypography variant="button" color="warning" fontWeight="regular">
             Modo demonstração: dados fictícios guardados apenas neste navegador. Para usar a sua
-            planilha, configure REACT_APP_SCRIPT_URL e REACT_APP_SCRIPT_TOKEN no arquivo .env.
+            planilha, configure REACT_APP_SCRIPT_URL e REACT_APP_GOOGLE_CLIENT_ID no arquivo .env.
+          </VuiTypography>
+        </VuiBox>
+      )}
+      {modoAcesso === "token" && (
+        <VuiBox
+          className="no-print"
+          mb={2}
+          p="12px 16px"
+          sx={{ borderRadius: "15px", border: "1px solid #F6AD55", background: "rgba(246,173,85,0.08)" }}
+        >
+          <VuiTypography variant="button" color="warning" fontWeight="regular">
+            Modo desenvolvimento: acesso por senha fixa, sem login. Não publique assim; configure
+            REACT_APP_GOOGLE_CLIENT_ID para ativar o login do Google.
           </VuiTypography>
         </VuiBox>
       )}
