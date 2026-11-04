@@ -35,6 +35,8 @@ export const PRESETS = [
   { nome: "Verde", ...PADRAO_CORES, destaque: "#12b76a", fundo: "#050a07", card: "#04180f" },
   { nome: "Roxo", ...PADRAO_CORES, destaque: "#8b5cf6", fundo: "#08050f", card: "#140a26" },
   { nome: "Âmbar", ...PADRAO_CORES, destaque: "#f59e0b", fundo: "#0a0703", card: "#1f1405" },
+  { nome: "Teal", ...PADRAO_CORES, destaque: "#14b8a6", fundo: "#041110", card: "#062321" },
+  { nome: "Aqua", ...PADRAO_CORES, destaque: "#22d3ee", fundo: "#04101a", card: "#06202e" },
 ];
 
 const HEX = /^#[0-9a-f]{6}$/i;
@@ -112,9 +114,25 @@ export function contraste(hexA, hexB) {
 /** Valores derivados das cores escolhidas (mesma estrutura do themeConfig). */
 export function derivar(p) {
   const fundoCard = misturar(p.fundo, p.card, p.opacidade);
+  const accent = misturar(p.destaque, "#ffffff", 0.28);
+  const [fr, fg, fb] = hexParaRgb(misturar(p.fundo, p.card, 0.4));
   return {
+    login: {
+      imageOverlay: `linear-gradient(135deg, ${rgba(p.destaque, 0.55)}, rgba(0, 0, 0, 0.45))`,
+      fallbackBackground: `radial-gradient(700px 500px at 20% 20%, ${rgba(p.destaque, 0.55)}, transparent 65%), radial-gradient(600px 500px at 80% 90%, ${rgba(accent, 0.25)}, transparent 60%), ${p.fundo}`,
+    },
+    sidenav: {
+      button: misturar(p.card, p.destaque, 0.15),
+      main: `rgba(${fr}, ${fg}, ${fb}, 0.94) 19.41%`,
+      state: `rgba(${hexParaRgb(p.fundo).join(", ")}, 0.49) 76.65%`,
+    },
+    neutros: {
+      escuro: misturar(p.card, "#000000", 0.3),
+      medio: misturar(p.card, p.destaque, 0.15),
+      claro: misturar(p.card, "#ffffff", 0.25),
+    },
     primary: p.destaque,
-    accent: misturar(p.destaque, "#ffffff", 0.28),
+    accent,
     gradient: `radial-gradient(900px 500px at 88% -8%, ${rgba(p.destaque, 0.2)}, transparent 60%), radial-gradient(700px 400px at -5% 105%, ${rgba(p.destaque, 0.08)}, transparent 60%), ${p.fundo}`,
     cardBackground: rgba(p.card, p.opacidade),
     cardBorder: rgba(p.texto, 0.125),
@@ -151,5 +169,8 @@ export function aplicarCores(config, p) {
   config.inputs = { ...config.inputs, ...d.inputs };
   config.checkbox.borderColor = d.checkboxBorder;
   config.tonsInfo = d.tonsInfo;
+  config.login = { ...config.login, ...d.login };
+  config.sidenav = d.sidenav;
+  config.neutros = d.neutros;
   config.personalizado = true;
 }

@@ -4,6 +4,7 @@ import Chart from "react-apexcharts";
 
 import { MESES, brl, brlCompact } from "utils/finance";
 import themeConfig from "themeConfig";
+import { misturar } from "utils/tema";
 
 const texto = { colors: themeConfig.fonts.secondary, fontSize: "11px" };
 const COR_INVEST = "#f6ad55";
@@ -189,7 +190,7 @@ export function ComparativoChart({ rotulos, estimado, real, horizontal, legendas
   const options = useMemo(
     () => ({
       ...base,
-      colors: ["#8f9bff", themeConfig.primary],
+      colors: [misturar(themeConfig.primary, "#ffffff", 0.6), themeConfig.primary],
       plotOptions: { bar: { horizontal, columnWidth: "55%", barHeight: "70%", borderRadius: 4 } },
       xaxis: {
         categories: rotulos,

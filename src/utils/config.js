@@ -20,7 +20,7 @@ export const DEFAULT_CONFIG = {
   topCategorias: 8,
   corReceitas: "#01b574",
   corDespesas: "#e31a1a",
-  corSaldo: themeConfig.accent,
+  corSaldo: "auto",
   alertas: true,
   vencimentos: true,
   categorias: true,
@@ -35,6 +35,12 @@ export const DEFAULT_CONFIG = {
   importar: true,
   estimarMedia: true,
 };
+
+/** Cor da linha de saldo: "auto" (ou o antigo padrão) segue a cor de destaque do tema. */
+export function corSaldoEfetiva(config) {
+  const v = String((config && config.corSaldo) || "").toLowerCase();
+  return !v || v === "auto" || v === "#ff5a4f" ? themeConfig.accent : config.corSaldo;
+}
 
 const FALSOS = ["false", "não", "nao", "0", "n"];
 
@@ -69,6 +75,7 @@ export function validarConfig(c) {
   const top = Number(c.topCategorias);
   if (!Number.isInteger(top) || top < 1 || top > 20) e.topCategorias = "Informe um número inteiro de 1 a 20.";
   ["corReceitas", "corDespesas", "corSaldo"].forEach((k) => {
+    if (k === "corSaldo" && c[k] === "auto") return;
     if (!HEX.test(String(c[k] || ""))) e[k] = "Use uma cor no formato #RRGGBB.";
   });
   return e;

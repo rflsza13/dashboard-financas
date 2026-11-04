@@ -77,8 +77,12 @@ O botão **Sair** fica em Configurações → Conta.
 - **Importar extrato:** CSV (Data, Descrição, Valor ou Débito/Crédito) ou OFX. Os valores são SOMADOS ao realizado do mês.
   Lançamentos já importados são ignorados nas próximas vezes (aba `Importados`).
 - **Exportar PDF:** botão no Resumo mensal; abre a impressão do navegador, escolha "Salvar como PDF".
+- **Imagem da tela de login:** o arquivo é `src/assets/images/login.jpg`. Para trocar, substitua esse arquivo (mantendo o
+  nome) ou edite `login.imageUrl` no `themeConfig.js` (outra imagem importada de `src/assets/images` ou uma URL
+  `https://...`). A imagem recebe uma película na cor de destaque do tema; use fotos escuras ou neutras para o melhor
+  resultado. Deixando `imageUrl` vazio, fica só o degradê.
 - **Tema claro e cores do tema:** Configurações → Aparência. O tema claro é uma inversão aproximada das cores. Em "Cores do
-  tema" você escolhe um tema pronto ou ajusta destaque, fundo, cards, textos e transparência; "Aplicar tema" recarrega a
+  tema" você escolhe um tema pronto (Vermelho, Azul, Verde, Roxo, Âmbar, Teal ou Aqua) ou ajusta destaque, fundo, cards, textos e transparência; "Aplicar tema" recarrega a
   página. A escolha fica só no navegador.
 
 ## Segurança

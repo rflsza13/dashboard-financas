@@ -14,7 +14,9 @@ import VuiInput from "components/VuiInput";
 import { useFinance } from "context/finance";
 import { brl, statusRecorrencia } from "utils/finance";
 import { projetarCenario } from "utils/cenarios";
+import { misturar } from "utils/tema";
 import themeConfig from "themeConfig";
+import { corSaldoEfetiva } from "utils/config";
 
 function Slider({ rotulo, valor, onChange, min, max, passo, sufixo }) {
   return (
@@ -50,10 +52,10 @@ function Cenarios() {
 
   const series = useMemo(
     () => [
-      { nome: "Saldo acumulado — hoje", dados: r.meses.map((m) => Math.round(m.acumBase)), cor: "#8f9bff", tracejada: true },
-      { nome: "Saldo acumulado — cenário", dados: r.meses.map((m) => Math.round(m.acumCen)), cor: config.corSaldo },
+      { nome: "Saldo acumulado — hoje", dados: r.meses.map((m) => Math.round(m.acumBase)), cor: misturar(themeConfig.primary, "#ffffff", 0.6), tracejada: true },
+      { nome: "Saldo acumulado — cenário", dados: r.meses.map((m) => Math.round(m.acumCen)), cor: corSaldoEfetiva(config) },
     ],
-    [r, config.corSaldo]
+    [r, config]
   );
   const rotulos = r.meses.map((m) => m.rotulo);
 

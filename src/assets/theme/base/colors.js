@@ -6,7 +6,7 @@ export default {
   },
 
   sidenav: {
-    button: "#2a1010",
+    button: themeConfig.sidenav.button,
   },
 
   text: {
@@ -40,8 +40,8 @@ export default {
   },
 
   secondary: {
-    main: "#1f0b0b",
-    focus: "#240e0e",
+    main: themeConfig.neutros ? themeConfig.neutros.escuro : "#1f0b0b",
+    focus: themeConfig.neutros ? themeConfig.neutros.medio : "#240e0e",
   },
 
   lightblue: {
@@ -115,8 +115,8 @@ export default {
   },
 
   dark: {
-    main: "#3a2a2a",
-    focus: "#2a0b0b",
+    main: themeConfig.neutros ? themeConfig.neutros.claro : "#3a2a2a",
+    focus: themeConfig.neutros ? themeConfig.neutros.escuro : "#2a0b0b",
     body: "#070707",
   },
 
@@ -129,8 +129,8 @@ export default {
 
     sidenav: {
       deg: "127.09",
-      main: "rgba(18, 18, 18, 0.94) 19.41%",
-      state: "rgba(10, 10, 10, 0.49) 76.65%",
+      main: themeConfig.sidenav.main,
+      state: themeConfig.sidenav.state,
     },
 
     borderLight: {
@@ -237,8 +237,8 @@ export default {
     },
 
     dark: {
-      main: "#1a1010",
-      state: "#5a4545",
+      main: themeConfig.neutros ? themeConfig.neutros.escuro : "#1a1010",
+      state: themeConfig.neutros ? themeConfig.neutros.claro : "#5a4545",
     },
   },
 

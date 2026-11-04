@@ -167,7 +167,8 @@ function Configuracoes() {
                     <input
                       type="color"
                       aria-label={`Cor de ${rotulo}`}
-                      value={/^#[0-9a-fA-F]{6}$/.test(form[chave]) ? form[chave] : "#000000"}
+                      disabled={form[chave] === "auto"}
+                      value={/^#[0-9a-fA-F]{6}$/.test(form[chave]) ? form[chave] : themeConfig.accent}
                       onChange={(ev) => set(chave)(ev.target.value)}
                       style={{
                         width: 44,
@@ -180,8 +181,19 @@ function Configuracoes() {
                       }}
                     />
                     <VuiTypography variant="button" color="text" fontWeight="regular">
-                      {String(form[chave]).toLowerCase()}
+                      {form[chave] === "auto" ? "segue o tema" : String(form[chave]).toLowerCase()}
                     </VuiTypography>
+                    {chave === "corSaldo" && (
+                      <label style={{ display: "inline-flex", alignItems: "center", gap: 6, color: themeConfig.fonts.secondary, fontSize: 12 }}>
+                        <input
+                          type="checkbox"
+                          aria-label="Saldo segue o tema"
+                          checked={form[chave] === "auto"}
+                          onChange={(ev) => set(chave)(ev.target.checked ? "auto" : themeConfig.accent)}
+                        />
+                        seguir o tema
+                      </label>
+                    )}
                   </VuiBox>
                   {erro(chave)}
                 </VuiBox>

@@ -23,6 +23,7 @@ import {
 import { useFinance } from "context/finance";
 import { MESES_LONGOS, brl, pct, gerarAlertas, listarVencimentos, textoVariacao, variacao } from "utils/finance";
 import themeConfig from "themeConfig";
+import { corSaldoEfetiva } from "utils/config";
 
 import YearBar from "layouts/dashboard/components/YearBar";
 import {
@@ -45,7 +46,7 @@ function Dashboard() {
   const history = useHistory();
 
   const cores = useMemo(
-    () => ({ receitas: config.corReceitas, despesas: config.corDespesas, saldo: config.corSaldo }),
+    () => ({ receitas: config.corReceitas, despesas: config.corDespesas, saldo: corSaldoEfetiva(config) }),
     [config.corReceitas, config.corDespesas, config.corSaldo]
   );
   const alertas = useMemo(() => gerarAlertas(calc, ano, metas), [calc, ano, metas]);
@@ -272,7 +273,6 @@ function Dashboard() {
                               <CategoriasChart
                                 categorias={categoriasDespesa}
                                 limite={Number(config.topCategorias)}
-                                cor={config.corDespesas}
                               />
                             </VuiBox>
                           </Card>

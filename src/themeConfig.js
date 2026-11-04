@@ -1,3 +1,4 @@
+import loginImagem from "assets/images/login.jpg";
 import { aplicarCores, lerCores } from "utils/tema";
 
 const themeConfig = {
@@ -17,13 +18,20 @@ const themeConfig = {
   fonts: { primary: "#ffffff", secondary: "#a0aec0" },
   checkbox: { borderColor: "rgba(255, 255, 255, 0.65)", checkedBackground: "#01b574", checkColor: "#ffffff" },
   login: {
-    imageUrl: "",
-    imageOverlay: "linear-gradient(135deg, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.55))",
+    // Para trocar a imagem: substitua o arquivo src/assets/images/login.jpg (mesmo nome),
+    // ou aponte para outro arquivo/URL (ex.: "https://site.com/foto.jpg"). Vazio = só o degradê.
+    imageUrl: loginImagem,
+    imageOverlay: "linear-gradient(135deg, rgba(227, 36, 43, 0.55), rgba(0, 0, 0, 0.45))",
     fallbackBackground:
       "radial-gradient(700px 500px at 20% 20%, rgba(227, 36, 43, 0.55), transparent 65%), radial-gradient(600px 500px at 80% 90%, rgba(255, 90, 79, 0.25), transparent 60%), #0b0b0b",
     title: "Bem-vindo(a)!",
     message: "Acesse o painel com a conta Google cadastrada.",
     panelBlur: "blur(18px)",
+  },
+  sidenav: {
+    button: "#2a1010",
+    main: "rgba(18, 18, 18, 0.94) 19.41%",
+    state: "rgba(10, 10, 10, 0.49) 76.65%",
   },
   scrollbar: { width: 6, color: "", hoverColor: "" },
   inputs: {

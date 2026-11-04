@@ -781,7 +781,7 @@ const CONFIG_AJUDA = {
   topCategorias: 'Quantas categorias aparecem no gráfico de despesas (1 a 20).',
   corReceitas: 'Cor das receitas no gráfico de fluxo mensal (#RRGGBB).',
   corDespesas: 'Cor das despesas no gráfico de fluxo mensal (#RRGGBB).',
-  corSaldo: 'Cor da linha de saldo acumulado (#RRGGBB).',
+  corSaldo: 'Cor da linha de saldo acumulado (#RRGGBB) ou auto para seguir o tema.',
   alertas: 'Sim/Não: mostra o card Pontos de atenção.',
   categorias: 'Sim/Não: mostra o gráfico de categorias.',
   investimentos: 'Sim/Não: mostra o gráfico de investimentos por categoria.',
@@ -834,7 +834,8 @@ function validarAjustes(c) {
   if (!(top % 1 === 0) || top < 1 || top > 20) throw new Error('Categorias no gráfico deve ser um inteiro de 1 a 20.');
   limpo.topCategorias = top;
   ['corReceitas', 'corDespesas', 'corSaldo'].forEach(function (k) {
-    if (!/^#[0-9a-fA-F]{6}$/.test(String(c[k] || ''))) throw new Error('Cor inválida em ' + chaveParaRotulo(k) + ' (use #RRGGBB).');
+    if (k === 'corSaldo' && c[k] === 'auto') { limpo[k] = 'auto'; return; }
+    if (!/^#[0-9a-fA-F]{6}$/.test(String(c[k] || ''))) throw new Error('Cor inválida em ' + chaveParaRotulo(k) + ' (use #RRGGBB ou auto).');
     limpo[k] = String(c[k]).toLowerCase();
   });
   CONFIG_BOOLEANOS.forEach(function (k) {

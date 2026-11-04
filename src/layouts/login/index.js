@@ -67,7 +67,7 @@ function Login() {
       : erro || erroLocal;
 
   const imagem = login.imageUrl
-    ? `${login.imageOverlay}, url(${login.imageUrl}) center / cover no-repeat`
+    ? `${login.imageOverlay}, url("${login.imageUrl}") center / cover no-repeat`
     : login.fallbackBackground;
 
   return (
