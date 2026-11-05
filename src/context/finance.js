@@ -413,23 +413,23 @@ export function FinanceProvider({ children }) {
   const calc = useMemo(
     () =>
       calcularAno(itensAno || [], state.recorrencias, state.ano, {
-        estimarMedia: Boolean(state.config.estimarMedia),
+        mediaAutomatica: Boolean(state.config.mediaAutomatica),
         cartoes: state.dados.cartoes,
         compras: state.dados.compras,
       }),
-    [itensAno, state.recorrencias, state.ano, state.config.estimarMedia, state.dados.cartoes, state.dados.compras]
+    [itensAno, state.recorrencias, state.ano, state.config.mediaAutomatica, state.dados.cartoes, state.dados.compras]
   );
 
   const calcularOutroAno = useCallback(
     (alvo) =>
       state.itens[alvo]
         ? calcularAno(state.itens[alvo], state.recorrencias, alvo, {
-            estimarMedia: Boolean(state.config.estimarMedia),
+            mediaAutomatica: Boolean(state.config.mediaAutomatica),
             cartoes: state.dados.cartoes,
             compras: state.dados.compras,
           })
         : null,
-    [state.itens, state.recorrencias, state.config.estimarMedia, state.dados.cartoes, state.dados.compras]
+    [state.itens, state.recorrencias, state.config.mediaAutomatica, state.dados.cartoes, state.dados.compras]
   );
 
   const value = useMemo(

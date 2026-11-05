@@ -33,7 +33,7 @@ export const DEFAULT_CONFIG = {
   comparativo: true,
   cenarios: true,
   importar: true,
-  estimarMedia: true,
+  mediaAutomatica: false,
 };
 
 /** Cor da linha de saldo: "auto" (ou o antigo padrão) segue a cor de destaque do tema. */

@@ -138,17 +138,26 @@ export function projecaoRecorrencias(recorrencias, ano, mes, quantidade = 12) {
 
 /**
  * Junta os valores realizados, a previsão manual e as recorrências de um ano.
- * Estimado do item no mês = previsto manual + parcelas ligadas ao item; sem nenhum dos dois,
- * usa a média dos meses anteriores com valor (se `estimarMedia` estiver ligado).
+ * Estimado do item no mês = previsto manual + parcelas/faturas ligadas ao item.
+ * Com `mediaAutomatica` ligada, itens sem nenhum dos dois e que se repetem todo mês (aparecem em pelo menos
+ * 2 dos últimos 3 meses lançados) são estimados pela média desses meses. Gastos esporádicos não são repetidos.
  */
-export function calcularAno(itens, recorrencias, ano, { estimarMedia = true, cartoes = [], compras = [] } = {}) {
+export function calcularAno(itens, recorrencias, ano, { mediaAutomatica = false, cartoes = [], compras = [] } = {}) {
   const porChave = {};
+  let ultimoComDados = -1;
+  itens.forEach((item) => {
+    item.real.forEach((v, m) => {
+      if (v > 0 && m > ultimoComDados) ultimoComDados = m;
+    });
+  });
+
   const linhas = itens.map((item) => {
     const linha = {
       ...item,
       chave: chaveItem(item.bloco, item.categoria, item.descricao),
       estimado: zeros(),
       parcelas: zeros(),
+      automatico: Array(12).fill(false),
     };
     porChave[linha.chave] = linha;
     return linha;
@@ -169,6 +178,7 @@ export function calcularAno(itens, recorrencias, ano, { estimarMedia = true, car
           prev: zeros(),
           estimado: zeros(),
           parcelas: zeros(),
+          automatico: Array(12).fill(false),
         };
         linhas.push(orfas[bloco]);
       }
@@ -197,9 +207,15 @@ export function calcularAno(itens, recorrencias, ano, { estimarMedia = true, car
       const base = manual + l.parcelas[m];
       if (base > 0) {
         l.estimado[m] = base;
-      } else if (estimarMedia && !l.orfa) {
-        const anteriores = l.real.slice(0, m).filter((v) => v > 0);
-        l.estimado[m] = anteriores.length ? soma(anteriores) / anteriores.length : 0;
+      } else if (mediaAutomatica && !l.orfa) {
+        const k = Math.min(m - 1, ultimoComDados);
+        if (k >= 1) {
+          const janela = l.real.slice(Math.max(0, k - 2), k + 1);
+          if (janela.filter((v) => v > 0).length >= 2) {
+            l.estimado[m] = soma(janela) / janela.length;
+            l.automatico[m] = true;
+          }
+        }
       }
     }
     l.realTotal = soma(l.real);
@@ -301,6 +317,8 @@ export function resumoDoMes(calc, recorrencias, ano, mes, { cartoes = [], compra
         real: l.real[mes],
         estimado: l.estimado[mes],
         parcelas: l.parcelas[mes],
+        manual: Number(l.prev[mes]) || 0,
+        automatico: Boolean(l.automatico && l.automatico[mes]),
         dif: l.real[mes] - l.estimado[mes],
       }))
       .filter((l) => l.real > 0 || l.estimado > 0)
@@ -432,12 +450,20 @@ export function primeiraFatura(dataIso, cartao) {
   return inicioTexto(Math.floor(idx / 12), idx % 12);
 }
 
-/** Parcela de uma compra na fatura de um mês: { numero, total, valor } ou null. */
+/**
+ * Cobrança de uma compra na fatura de um mês: { numero, total, valor } ou null.
+ * Compra fixa (mensalidade, ex.: streaming) repete todo mês a partir da 1ª fatura, até o mês final (se houver).
+ */
 export function parcelaCompra(compra, ano, mes) {
   const ini = parseInicio(compra.fatura);
-  const total = Math.max(1, Number(compra.parcelas) || 1);
   if (!ini) return null;
   const deslocamento = ano * 12 + mes - (ini.ano * 12 + ini.mes);
+  if (compra.fixa) {
+    const fim = parseInicio(compra.fim);
+    if (deslocamento < 0 || (fim && ano * 12 + mes > fim.ano * 12 + fim.mes)) return null;
+    return { numero: deslocamento + 1, total: null, valor: Number(compra.total) || 0, fixa: true };
+  }
+  const total = Math.max(1, Number(compra.parcelas) || 1);
   if (deslocamento < 0 || deslocamento >= total) return null;
   const valorTotal = Number(compra.total) || 0;
   const base = Math.round((valorTotal / total) * 100) / 100;
@@ -460,6 +486,12 @@ export function limiteComprometido(cartao, compras, ano, mes) {
   compras
     .filter((c) => c.cartaoId === cartao.id)
     .forEach((c) => {
+      if (c.fixa) {
+        // mensalidade: só a cobrança do mês de referência ocupa o limite (as futuras ainda não existem)
+        const p = parcelaCompra(c, ano, mes);
+        if (p) total += p.valor;
+        return;
+      }
       const n = Math.max(1, Number(c.parcelas) || 1);
       const ini = parseInicio(c.fatura);
       if (!ini) return;

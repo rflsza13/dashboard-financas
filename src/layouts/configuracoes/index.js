@@ -339,16 +339,16 @@ function Configuracoes() {
               <VuiBox display="flex" alignItems="center" gap="16px" mb={2}>
                 <VuiSwitch
                   color="info"
-                  checked={Boolean(form.estimarMedia)}
-                  onChange={(ev) => set("estimarMedia")(ev.target.checked)}
-                  inputProps={{ "aria-label": "Estimar pela média" }}
+                  checked={Boolean(form.mediaAutomatica)}
+                  onChange={(ev) => set("mediaAutomatica")(ev.target.checked)}
+                  inputProps={{ "aria-label": "Estimativa automática pela média" }}
                 />
                 <VuiBox>
                   <VuiTypography variant="button" color="white" fontWeight="medium" sx={{ display: "block" }}>
-                    Estimar pela média
+                    Estimativa automática pela média
                   </VuiTypography>
                   <VuiTypography variant="caption" color="text" fontWeight="regular">
-                    Itens sem previsão nem parcela são estimados pela média dos meses anteriores.
+                    Desligado, o estimado é só o que você previu mais parcelas, faturas e recorrências. Ligado, itens que se repetem todo mês (2 dos últimos 3 meses) e não têm previsão também entram pela média; gastos esporádicos não.
                   </VuiTypography>
                 </VuiBox>
               </VuiBox>

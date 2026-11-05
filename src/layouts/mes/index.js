@@ -41,6 +41,14 @@ const corDif = (bloco, dif) => {
   return bom ? "#01b574" : "#fd5c70";
 };
 
+const origem = (l) => {
+  const partes = [];
+  if (l.manual > 0) partes.push(`previsto ${brl(l.manual)}`);
+  if (l.parcelas > 0) partes.push(`${l.manual > 0 ? "+ " : ""}parcelas/faturas ${brl(l.parcelas)}`);
+  if (l.automatico) partes.push("média automática");
+  return partes.join(" ");
+};
+
 function TabelaBloco({ bloco, titulo, linhas, extras, itensLivres, mes, onAdicionarExtra, setCelula }) {
   const todas = [...linhas, ...extras];
   const totReal = todas.reduce((a, l) => a + l.real, 0);
@@ -80,11 +88,8 @@ function TabelaBloco({ bloco, titulo, linhas, extras, itensLivres, mes, onAdicio
                 <td style={{ ...td, textAlign: "left", color: themeConfig.fonts.secondary }}>{l.categoria}</td>
                 <td style={{ ...td, textAlign: "left" }}>
                   {l.descricao}
-                  {l.parcelas > 0 && (
-                    <span style={{ color: themeConfig.fonts.secondary, fontSize: 11 }}>
-                      {" "}
-                      · inclui parcelas ({brl(l.parcelas)})
-                    </span>
+                  {origem(l) && (
+                    <span style={{ color: themeConfig.fonts.secondary, fontSize: 11 }}> · estimado: {origem(l)}</span>
                   )}
                 </td>
                 <td style={td}>{l.estimado ? brl(l.estimado) : "—"}</td>
@@ -194,6 +199,8 @@ function Mes() {
         real: l.real[mes],
         estimado: l.estimado[mes],
         parcelas: l.parcelas[mes],
+        manual: Number(l.prev[mes]) || 0,
+        automatico: Boolean(l.automatico && l.automatico[mes]),
         dif: l.real[mes] - l.estimado[mes],
       }));
     const mostrados = new Set([...ids, ...extrasBloco.map((l) => l.id)]);

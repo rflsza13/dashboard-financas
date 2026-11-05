@@ -7,7 +7,7 @@ Sem configurar nada, o app abre em **modo demonstração** (dados fictícios, sa
 Serve para testar as telas antes de ligar a planilha.
 
 ## 2. Planilha no Google Drive
-1. Envie `Base_Dashboard_Financeiro_v3.xlsx` para o Google Drive e abra com o Google Planilhas
+1. Envie `Base_Dashboard_Financeiro_v4.xlsx` para o Google Drive e abra com o Google Planilhas
    (**Arquivo → Salvar como Planilhas Google**).
 2. Estrutura que o dashboard espera:
    - **Uma aba por ano** (nome = ano, ex.: `2026`) com os blocos `RECEITAS`, `DESPESAS` e `INVESTIMENTOS`
@@ -65,10 +65,14 @@ O botão **Sair** fica em Configurações → Conta.
   Excluir um item apaga os valores dele e deixa a linha livre para reaproveitar.
 - **Resumo mensal:** estimado × realizado do mês, tabelas por bloco e gráficos.
 - **Recorrências:** cada parcela (ex.: 4/10) entra no **estimado** do item escolhido nos meses seguintes.
-  Estimado do item no mês = previsto manual + parcelas ligadas ao item. Sem nenhum dos dois, usa a média dos meses
-  anteriores (dá para desligar em Configurações).
+  Estimado do item no mês = previsto manual + parcelas/recorrências + faturas de cartão ligadas ao item. Não repita
+  na coluna Previsto o que já está cadastrado como recorrência ou compra no cartão, senão o valor conta em dobro.
+  A **estimativa automática pela média** (Configurações, desligada por padrão) completa só itens que se repetem todo
+  mês (aparecem em pelo menos 2 dos últimos 3 meses lançados); gastos únicos, como IPTU ou viagem, não são repetidos.
+  O Resumo mensal mostra, ao lado de cada item, de onde veio o estimado.
 - **Novo ano:** copia a aba do último ano, mantém os itens e zera os valores.
-- **Cartões:** cada compra parcelada vira uma parcela por fatura (a 1ª fatura é calculada pelo fechamento e vencimento,
+- **Cartões:** cada compra parcelada vira uma parcela por fatura; em "Nova compra" escolha **Mensalidade fixa** para
+  assinaturas (streaming etc.): o valor se repete todo mês a partir da 1ª fatura, até a última cobrança informada (opcional) (a 1ª fatura é calculada pelo fechamento e vencimento,
   mas pode ser ajustada). A fatura do mês entra no estimado do item escolhido no cartão.
 - **Contas a vencer:** informe o "Dia do vencimento" na recorrência (e o vencimento no cartão). O dashboard mostra o que
   vence em 7 dias e o que está atrasado; marcar como pago grava na aba `Pagos`.

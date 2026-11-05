@@ -585,10 +585,11 @@ const TABELAS = {
     { k: 'fechamento', t: 'i', req: 1, min: 1, max: 31 }, { k: 'vencimento', t: 'i', req: 1, min: 1, max: 31 },
     { k: 'limite', t: 'n', min: 0 }, { k: 'categoria', t: 's', req: 1, max: 40 }, { k: 'item', t: 's', req: 1, max: 60 },
     { k: 'ativo', t: 'b' }] },
-  compras: { aba: 'Compras', titulos: ['ID', 'Cartão (ID)', 'Data', 'Descrição', 'Categoria', 'Valor total', 'Parcelas', '1ª fatura (AAAA-MM)', 'Observações'], cols: [
+  compras: { aba: 'Compras', titulos: ['ID', 'Cartão (ID)', 'Data', 'Descrição', 'Categoria', 'Valor total', 'Parcelas', '1ª fatura (AAAA-MM)', 'Observações', 'Mensalidade fixa', 'Última cobrança (AAAA-MM)'], cols: [
     { k: 'id', t: 's', req: 1, max: 40 }, { k: 'cartaoId', t: 's', req: 1, max: 40 }, { k: 'data', t: 'd', req: 1 },
     { k: 'descricao', t: 's', req: 1, max: 60 }, { k: 'categoria', t: 's', max: 40 }, { k: 'total', t: 'n', req: 1, min: 0.01 },
-    { k: 'parcelas', t: 'i', req: 1, min: 1, max: 60 }, { k: 'fatura', t: 'm', req: 1 }, { k: 'obs', t: 's', max: 120 }] },
+    { k: 'parcelas', t: 'i', req: 1, min: 1, max: 60 }, { k: 'fatura', t: 'm', req: 1 }, { k: 'obs', t: 's', max: 120 },
+    { k: 'fixa', t: 'b', pad: false }, { k: 'fim', t: 'm' }] },
   objetivos: { aba: 'Objetivos', titulos: ['ID', 'Nome', 'Valor alvo', 'Prazo (AAAA-MM)', 'Valor atual', 'Aporte mensal', 'Observações'], cols: [
     { k: 'id', t: 's', req: 1, max: 40 }, { k: 'nome', t: 's', req: 1, max: 60 }, { k: 'alvo', t: 'n', req: 1, min: 0.01 },
     { k: 'prazo', t: 'm' }, { k: 'atual', t: 'n', min: 0 }, { k: 'aporte', t: 'n', min: 0 }, { k: 'obs', t: 's', max: 120 }] },
@@ -618,6 +619,9 @@ function abaTabela(nome, criar) {
     aba = ss.insertSheet(e.aba);
     aba.getRange(1, 1, 1, e.titulos.length).setValues([e.titulos]).setFontWeight('bold');
     aba.setFrozenRows(1);
+  } else if (aba && String(aba.getRange(1, e.titulos.length).getValue()).trim() === '') {
+    // planilha criada numa versão anterior: acrescenta os cabeçalhos das colunas novas
+    aba.getRange(1, 1, 1, e.titulos.length).setValues([e.titulos]).setFontWeight('bold');
   }
   return aba;
 }
@@ -645,7 +649,7 @@ function lerTabela(nome) {
       const v = row[i];
       if (c.t === 'n') o[c.k] = arredonda(paraNumero(v));
       else if (c.t === 'i') o[c.k] = Math.floor(paraNumero(v));
-      else if (c.t === 'b') o[c.k] = simNao(v === '' ? 'sim' : v);
+      else if (c.t === 'b') o[c.k] = c.pad === false ? (v === '' ? false : simNao(v)) : simNao(v === '' ? 'sim' : v);
       else if (c.t === 'd') o[c.k] = paraData(v);
       else if (c.t === 'm') o[c.k] = paraInicio(v);
       else o[c.k] = String(v === undefined || v === null ? '' : v).trim();
@@ -679,7 +683,7 @@ function validarLinha(nome, obj) {
       limpo[c.k] = c.t === 'n' ? arredonda(v) : v;
     } else if (c.t === 'b') {
       if (!vazio && typeof v !== 'boolean') throw new Error('Valor inválido em ' + rot[i] + '.');
-      limpo[c.k] = vazio ? true : v;
+      limpo[c.k] = vazio ? c.pad !== false : v;
     } else if (c.t === 'd') {
       if (vazio) { limpo[c.k] = ''; return; }
       if (!/^\d{4}-\d{2}-\d{2}$/.test(String(v))) throw new Error('Data inválida em ' + rot[i] + ' (AAAA-MM-DD).');
@@ -765,7 +769,7 @@ const CONFIG_CHAVES = {
   'Gráfico de categorias': 'categorias',
   'Investimentos por categoria': 'investimentos',
   'Realizado × estimado': 'previsto',
-  'Estimar pela média': 'estimarMedia',
+  'Estimativa automática pela média': 'mediaAutomatica',
   'Contas a vencer': 'vencimentos',
   'Página Cartões': 'cartoes',
   'Página Orçamento': 'orcamento',
@@ -786,7 +790,7 @@ const CONFIG_AJUDA = {
   categorias: 'Sim/Não: mostra o gráfico de categorias.',
   investimentos: 'Sim/Não: mostra o gráfico de investimentos por categoria.',
   previsto: 'Sim/Não: mostra o gráfico realizado × estimado.',
-  estimarMedia: 'Sim/Não: itens sem previsão nem parcela são estimados pela média dos meses anteriores.',
+  mediaAutomatica: 'Sim/Não: itens regulares sem previsão entram no estimado pela média dos últimos 3 meses (padrão: Não).',
   vencimentos: 'Sim/Não: mostra o painel de contas a vencer no dashboard.',
   cartoes: 'Sim/Não: mostra a página de cartões de crédito.',
   orcamento: 'Sim/Não: mostra a página de orçamento (metas e 50/30/20).',
@@ -797,7 +801,7 @@ const CONFIG_AJUDA = {
   importar: 'Sim/Não: mostra a página de importação de extrato.'
 };
 
-const CONFIG_BOOLEANOS = ['alertas', 'categorias', 'investimentos', 'previsto', 'estimarMedia', 'vencimentos',
+const CONFIG_BOOLEANOS = ['alertas', 'categorias', 'investimentos', 'previsto', 'mediaAutomatica', 'vencimentos',
   'cartoes', 'orcamento', 'objetivos', 'patrimonio', 'comparativo', 'cenarios', 'importar'];
 
 function chaveParaRotulo(chave) {

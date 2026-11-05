@@ -14,7 +14,8 @@ import { parseValor } from "components/Finance/EditableValor";
 
 /**
  * Formulário genérico em diálogo.
- * campos: [{ chave, rotulo, tipo: texto|numero|inteiro|select|mes|data, opcoes, obrigatorio, min, max, tamanho, largura }]
+ * campos: [{ chave, rotulo (texto ou função dos valores), tipo: texto|numero|inteiro|select|mes|data, opcoes,
+ * obrigatorio, min, max, tamanho, largura, visivel (função dos valores; campo oculto não é validado nem enviado) }]
  * `derivar(valores, campoMudado)` pode devolver um objeto com campos a preencher automaticamente.
  */
 function FormDialog({ aberto, titulo, descricao, campos, inicial, derivar, onFechar, onSalvar }) {
@@ -44,10 +45,12 @@ function FormDialog({ aberto, titulo, descricao, campos, inicial, derivar, onFec
     const saida = {};
     for (let i = 0; i < campos.length; i += 1) {
       const c = campos[i];
+      if (c.visivel && !c.visivel(v)) continue;
+      const rotulo = typeof c.rotulo === "function" ? c.rotulo(v) : c.rotulo;
       const bruto = v[c.chave];
       const texto = typeof bruto === "string" ? bruto.trim() : bruto;
       if (c.obrigatorio && (texto === "" || texto === undefined)) {
-        setErro(`Preencha: ${c.rotulo}.`);
+        setErro(`Preencha: ${rotulo}.`);
         return;
       }
       if (c.tipo === "numero" || c.tipo === "inteiro") {
@@ -56,11 +59,11 @@ function FormDialog({ aberto, titulo, descricao, campos, inicial, derivar, onFec
         } else {
           const n = parseValor(texto);
           if (n === null || (c.tipo === "inteiro" && !Number.isInteger(n))) {
-            setErro(`Valor inválido em: ${c.rotulo}.`);
+            setErro(`Valor inválido em: ${rotulo}.`);
             return;
           }
           if ((c.min !== undefined && n < c.min) || (c.max !== undefined && n > c.max)) {
-            setErro(`${c.rotulo}: use um valor entre ${c.min !== undefined ? c.min : "0"} e ${c.max !== undefined ? c.max : "∞"}.`);
+            setErro(`${rotulo}: use um valor entre ${c.min !== undefined ? c.min : "0"} e ${c.max !== undefined ? c.max : "∞"}.`);
             return;
           }
           saida[c.chave] = n;
@@ -69,7 +72,7 @@ function FormDialog({ aberto, titulo, descricao, campos, inicial, derivar, onFec
         saida[c.chave] = c.tipoValor === "booleano" ? texto === "1" : texto;
       } else {
         if (c.tamanho && String(texto).length > c.tamanho) {
-          setErro(`${c.rotulo}: até ${c.tamanho} caracteres.`);
+          setErro(`${rotulo}: até ${c.tamanho} caracteres.`);
           return;
         }
         saida[c.chave] = texto;
@@ -93,9 +96,9 @@ function FormDialog({ aberto, titulo, descricao, campos, inicial, derivar, onFec
           </VuiTypography>
         )}
         <Grid container spacing={2} sx={{ mt: 0 }}>
-          {campos.map((c) => (
+          {campos.filter((c) => !c.visivel || c.visivel(v)).map((c) => (
             <Grid item xs={12} sm={c.largura || 12} key={c.chave}>
-              <FieldLabel>{c.rotulo}</FieldLabel>
+              <FieldLabel>{typeof c.rotulo === "function" ? c.rotulo(v) : c.rotulo}</FieldLabel>
               {c.tipo === "select" ? (
                 <NativeSelect value={v[c.chave] === undefined ? "" : v[c.chave]} onChange={(e) => mudar(c.chave, e.target.value)}>
                   {(c.opcoes || []).map((o) => (

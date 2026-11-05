@@ -69,14 +69,25 @@ function Cartoes() {
     return { ok };
   };
 
+  const ehFixa = (v) => v.tipo === "fixa";
   const camposCompra = [
     { chave: "cartaoId", rotulo: "Cartão", tipo: "select", opcoes: cartoes.map((c) => ({ valor: c.id, rotulo: c.nome })) },
-    { chave: "data", rotulo: "Data da compra", tipo: "data", obrigatorio: true, largura: 6 },
-    { chave: "total", rotulo: "Valor total (R$)", tipo: "numero", obrigatorio: true, min: 0.01, largura: 6 },
+    {
+      chave: "tipo",
+      rotulo: "Tipo de lançamento",
+      tipo: "select",
+      opcoes: [
+        { valor: "unica", rotulo: "Compra (à vista ou parcelada)" },
+        { valor: "fixa", rotulo: "Mensalidade fixa (assinatura, streaming...)" },
+      ],
+    },
+    { chave: "data", rotulo: (v) => (ehFixa(v) ? "Data da 1ª cobrança" : "Data da compra"), tipo: "data", obrigatorio: true, largura: 6 },
+    { chave: "total", rotulo: (v) => (ehFixa(v) ? "Valor mensal (R$)" : "Valor total (R$)"), tipo: "numero", obrigatorio: true, min: 0.01, largura: 6 },
     { chave: "descricao", rotulo: "Descrição", tipo: "texto", obrigatorio: true, tamanho: 60 },
     { chave: "categoria", rotulo: "Categoria do gasto (opcional)", tipo: "texto", tamanho: 40, largura: 6 },
-    { chave: "parcelas", rotulo: "Parcelas", tipo: "inteiro", obrigatorio: true, min: 1, max: 60, largura: 6 },
-    { chave: "fatura", rotulo: "Mês da 1ª fatura (vencimento)", tipo: "mes", obrigatorio: true },
+    { chave: "parcelas", rotulo: "Parcelas", tipo: "inteiro", obrigatorio: true, min: 1, max: 60, largura: 6, visivel: (v) => !ehFixa(v) },
+    { chave: "fatura", rotulo: (v) => (ehFixa(v) ? "Mês da 1ª fatura com a cobrança" : "Mês da 1ª fatura (vencimento)"), tipo: "mes", obrigatorio: true, largura: 6 },
+    { chave: "fim", rotulo: "Última cobrança (opcional, para quando cancelar)", tipo: "mes", largura: 6, visivel: ehFixa },
   ];
 
   const derivarCompra = (v, mudou) => {
@@ -88,16 +99,30 @@ function Cartoes() {
 
   const inicialCompra = useMemo(() => {
     const c = dCompra.compra;
-    if (c) return c;
+    if (c) return { ...c, tipo: c.fixa ? "fixa" : "unica" };
     const hoje = new Date();
     const data = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}-${String(hoje.getDate()).padStart(2, "0")}`;
     const cartaoId = dCompra.cartaoId || (cartoes[0] ? cartoes[0].id : "");
-    return { cartaoId, data, parcelas: "1", fatura: primeiraFatura(data, cartoes.find((x) => x.id === cartaoId)) };
+    return { cartaoId, tipo: "unica", data, parcelas: "1", fatura: primeiraFatura(data, cartoes.find((x) => x.id === cartaoId)) };
   }, [dCompra]);
 
   const salvarCompra = async (v) => {
+    const fixa = ehFixa(v);
+    if (fixa && v.fim && v.fim < v.fatura) return { ok: false, erro: "A última cobrança não pode ser antes da primeira." };
     const ok = await salvarLinhas("compras", [
-      { id: dCompra.compra ? dCompra.compra.id : uuidv4().slice(0, 10), cartaoId: v.cartaoId, data: v.data, descricao: v.descricao, categoria: v.categoria || "", total: v.total, parcelas: v.parcelas, fatura: v.fatura, obs: "" },
+      {
+        id: dCompra.compra ? dCompra.compra.id : uuidv4().slice(0, 10),
+        cartaoId: v.cartaoId,
+        data: v.data,
+        descricao: v.descricao,
+        categoria: v.categoria || "",
+        total: v.total,
+        parcelas: fixa ? 1 : v.parcelas,
+        fatura: v.fatura,
+        obs: "",
+        fixa,
+        fim: fixa ? v.fim || "" : "",
+      },
     ]);
     if (ok) setDCompra({ aberto: false, compra: null, cartaoId: "" });
     return { ok };
@@ -222,7 +247,7 @@ function Cartoes() {
                         <th style={{ ...th, textAlign: "left" }}>Compra</th>
                         <th style={{ ...th, textAlign: "left" }}>Data</th>
                         <th style={th}>Parcela</th>
-                        <th style={th}>{todas ? "Total" : "Valor"}</th>
+                        <th style={th}>{todas ? "Total / mês" : "Valor"}</th>
                         <th style={{ ...th, width: 64 }} />
                       </tr>
                     </thead>
@@ -231,10 +256,11 @@ function Cartoes() {
                         <tr key={compra.id} style={{ borderBottom: BORDA }}>
                           <td style={{ ...td, textAlign: "left" }}>
                             {compra.descricao}
+                            {compra.fixa && <span style={{ color: themeConfig.fonts.secondary, fontSize: 11 }}> · mensalidade fixa{compra.fim ? ` até ${compra.fim.slice(5, 7)}/${compra.fim.slice(0, 4)}` : ""}</span>}
                             {compra.categoria && <span style={{ color: themeConfig.fonts.secondary, fontSize: 11 }}> · {compra.categoria}</span>}
                           </td>
                           <td style={{ ...td, textAlign: "left", color: themeConfig.fonts.secondary }}>{compra.data.split("-").reverse().join("/")}</td>
-                          <td style={td}>{parcela ? `${parcela.numero}/${parcela.total}` : `${compra.parcelas}x`}</td>
+                          <td style={td}>{compra.fixa ? "mensal" : parcela ? `${parcela.numero}/${parcela.total}` : `${compra.parcelas}x`}</td>
                           <td style={td}>{brl(parcela ? parcela.valor : compra.total)}</td>
                           <td style={{ ...td, textAlign: "center", whiteSpace: "nowrap" }}>
                             <IconeAcao titulo="Editar compra" onClick={() => setDCompra({ aberto: true, compra, cartaoId: c.id })}><IoPencil size="13px" /></IconeAcao>
@@ -269,7 +295,7 @@ function Cartoes() {
       <FormDialog
         aberto={dCompra.aberto}
         titulo={dCompra.compra ? "Editar compra" : "Nova compra"}
-        descricao="A compra parcelada é dividida em parcelas iguais, uma por fatura, a partir do mês informado."
+        descricao="Compra parcelada: dividida em parcelas iguais, uma por fatura. Mensalidade fixa: repete todo mês a partir da 1ª fatura, sem fim (ou até a última cobrança informada)."
         campos={camposCompra}
         inicial={inicialCompra}
         derivar={derivarCompra}
