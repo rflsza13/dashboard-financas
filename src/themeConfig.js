@@ -1,4 +1,5 @@
 import loginImagem from "assets/images/login.jpg";
+import logoSidebar from "assets/images/logo.png";
 import { aplicarCores, lerCores } from "utils/tema";
 
 const themeConfig = {
@@ -32,6 +33,13 @@ const themeConfig = {
     button: "#2a1010",
     main: "rgba(18, 18, 18, 0.94) 19.41%",
     state: "rgba(10, 10, 10, 0.49) 76.65%",
+    // Logo exibido no topo da sidebar:
+    // - Imagem personalizada carregada (logoSidebar)
+    // - Para usar outra da pasta public: "/logo.png"
+    // - Para ocultar: ""
+    logo: logoSidebar,
+    // Tamanho do logo em pixels (largura máxima).
+    logoSize: "56px",
   },
   scrollbar: { width: 6, color: "", hoverColor: "" },
   inputs: {

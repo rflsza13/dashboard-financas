@@ -28,6 +28,23 @@ import { useVisionUIController, setMiniSidenav, setTransparentSidenav } from "co
 
 // Vision UI Dashboard React icons
 import SimmmpleLogo from "examples/Icons/SimmmpleLogo";
+import themeConfig from "themeConfig";
+
+function resolverLogo(src) {
+  if (!src) return null;
+  if (typeof src !== "string") {
+    if (src && src.default) return src.default;
+    return src;
+  }
+  const s = src.trim();
+  if (!s || s.toLowerCase() === "none" || s.toLowerCase() === "false") return null;
+  if (s.toLowerCase() === "simmmple" || s.toLowerCase() === "default" || s.toLowerCase() === "padrao") {
+    return "simmmple";
+  }
+  if (/^(https?:|\/\/|data:|blob:|\/static\/media\/)/i.test(s)) return s;
+  const path = s.startsWith("/") ? s : `/${s}`;
+  return `${process.env.PUBLIC_URL || ""}${path}`;
+}
 
 function Sidenav({ color, brandName, routes, ...rest }) {
   const [controller, dispatch] = useVisionUIController();
@@ -37,6 +54,9 @@ function Sidenav({ color, brandName, routes, ...rest }) {
   const collapseName = pathname.split("/").slice(1)[0];
 
   const closeSidenav = () => setMiniSidenav(dispatch, true);
+
+  const logoSrc = resolverLogo(themeConfig.sidenav && themeConfig.sidenav.logo);
+  const logoSize = (themeConfig.sidenav && themeConfig.sidenav.logoSize) || "32px";
 
   useEffect(() => {
     function handleMiniSidenav() {
@@ -146,17 +166,36 @@ function Sidenav({ color, brandName, routes, ...rest }) {
               })
             }
           >
-            <VuiBox
-              display="flex"
-              sx={
-                ((theme) => sidenavLogoLabel(theme, { miniSidenav, transparentSidenav }),
-                {
-                  mr: miniSidenav || (miniSidenav && transparentSidenav) ? 0 : 1,
-                })
-              }
-            >
-              <SimmmpleLogo size="24px" />
-            </VuiBox>
+            {logoSrc && (
+              <VuiBox
+                display="flex"
+                alignItems="center"
+                justifyContent="center"
+                sx={
+                  ((theme) => sidenavLogoLabel(theme, { miniSidenav, transparentSidenav }),
+                  {
+                    mr: miniSidenav || (miniSidenav && transparentSidenav) ? 0 : "12px",
+                    flexShrink: 0,
+                  })
+                }
+              >
+                {logoSrc === "simmmple" ? (
+                  <SimmmpleLogo size="24px" />
+                ) : (
+                  <img
+                    src={logoSrc}
+                    alt="Logo"
+                    style={{
+                      width: logoSize || "36px",
+                      height: "auto",
+                      maxHeight: "32px",
+                      objectFit: "contain",
+                      display: "block",
+                    }}
+                  />
+                )}
+              </VuiBox>
+            )}
             <VuiTypography
               variant="button"
               textGradient={true}

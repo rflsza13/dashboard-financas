@@ -79,8 +79,14 @@ function Configuracoes() {
     setRetorno(null);
     if (Object.keys(e).length) return;
     setSalvando(true);
+    const camposBooleanos = ["mediaAutomatica", ...RECURSOS.map((r) => r.chave)];
+    const booleanos = camposBooleanos.reduce((acc, k) => {
+      acc[k] = Boolean(form[k]);
+      return acc;
+    }, {});
     const res = await salvarConfig({
       ...form,
+      ...booleanos,
       nomeSistema: String(form.nomeSistema).trim(),
       topCategorias: Number(form.topCategorias),
     });
